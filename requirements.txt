@@ -8,3 +8,4 @@ pytesseract
 PyPDF2
 PyMySQL
 psycopg2-binary
+requests
