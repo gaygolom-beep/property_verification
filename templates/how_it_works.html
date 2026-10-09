@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}How It Works{% endblock %}
+{% block content %}
+
+<div class="text-center mb-5">
+  <div class="hero-eyebrow d-inline-flex" style="background: var(--primary-tint); color: var(--primary-dark);">
+    <i class="bi bi-diagram-3"></i> System Architecture
+  </div>
+  <h1 class="display-6 fw-bold mt-2">How the verification pipeline works</h1>
+  <p class="text-muted col-md-8 mx-auto">
+    From a document upload to a human's final decision, here's every step
+    the platform takes &mdash; and which module is responsible for it.
+  </p>
+</div>
+
+<div class="row justify-content-center">
+  <div class="col-lg-9">
+    <div class="pipeline">
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon">1</div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-upload text-primary"></i> Upload &amp; Geocode</h5>
+          <p class="text-muted small mb-0">
+            An owner adds a property (with address, locality, city, state, PIN)
+            and uploads supporting documents &mdash; Title Deed, NOC, Tax Receipt,
+            Sale Agreement. The address is geocoded automatically and pinned on
+            an interactive map.
+          </p>
+          <span class="pipeline-step-tech">routes/property_routes.py &middot; routes/geocoding.py</span>
+        </div>
+      </div>
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon">2</div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-eye text-primary"></i> OCR &mdash; Optical Character Recognition</h5>
+          <p class="text-muted small mb-0">
+            Every uploaded image or PDF is run through Tesseract OCR (or PDF
+            text extraction) the moment it's uploaded, turning a scanned
+            document into machine-readable text.
+          </p>
+          <span class="pipeline-step-tech">routes/ocr.py</span>
+        </div>
+      </div>
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon">3</div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-cpu text-primary"></i> NLP Field Extraction &amp; Matching</h5>
+          <p class="text-muted small mb-0">
+            Pattern-based NLP pulls structured fields out of the raw text &mdash;
+            owner name, survey number, area, dates, PIN code &mdash; then compares
+            them <em>across</em> a property's documents using fuzzy name
+            matching and numeric tolerance, so "Priya Deshmukh" and
+            "Priya D. Deshmukh" aren't flagged as different people.
+          </p>
+          <span class="pipeline-step-tech">analysis/extractor.py &middot; analysis/matcher.py</span>
+        </div>
+      </div>
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon">4</div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-shield-exclamation text-primary"></i> Risk Scoring &amp; Anomaly Detection</h5>
+          <p class="text-muted small mb-0">
+            About nine automated checks run &mdash; missing documents, unreadable
+            scans, name/survey/area mismatches, impossible or out-of-order
+            dates, duplicate content, duplicate ownership claims. Each failed
+            check adds explainable points to a transparent 0&ndash;100 score,
+            never a black-box number.
+          </p>
+          <span class="pipeline-step-tech">analysis/risk.py</span>
+        </div>
+      </div>
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon">5</div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-list-check text-primary"></i> Human Review Queue</h5>
+          <p class="text-muted small mb-0">
+            The score can only ever move a property from "Pending" to
+            "In Review" &mdash; never straight to Verified or Rejected. An admin
+            opens the Review Queue (riskiest properties first), reads the
+            findings, and makes the actual decision.
+          </p>
+          <span class="pipeline-step-tech">routes/analysis_routes.py &middot; templates/analysis/queue.html</span>
+        </div>
+      </div>
+
+      <div class="pipeline-step reveal-on-scroll">
+        <div class="pipeline-step-icon"><i class="bi bi-check-lg"></i></div>
+        <div class="pipeline-step-body">
+          <h5 class="mb-1"><i class="bi bi-file-earmark-pdf text-primary"></i> Verified &amp; Reported</h5>
+          <p class="text-muted small mb-0">
+            The final decision is recorded permanently in an append-only audit
+            trail (never overwritten), and a signed-off PDF report can be
+            downloaded &mdash; property summary, every finding, and a human
+            sign-off block.
+          </p>
+          <span class="pipeline-step-tech">analysis/report.py &middot; routes/verification_routes.py</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<div class="text-center mt-5 reveal-on-scroll">
+  <p class="text-muted small mb-2">
+    <i class="bi bi-info-circle"></i> This pipeline supports technical document-consistency
+    verification only &mdash; it is not a legal certification of ownership or title.
+  </p>
+  {% if current_user.is_authenticated %}
+    <a href="{{ url_for('property.list_properties') }}" class="btn btn-primary">Go to My Properties</a>
+  {% else %}
+    <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Create an Account</a>
+  {% endif %}
+</div>
+
+{% endblock %}

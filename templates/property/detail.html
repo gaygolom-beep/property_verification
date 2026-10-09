@@ -1,0 +1,304 @@
+{% extends "base.html" %}
+{% block title %}{{ property.title }}{% endblock %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h4 class="mb-0">{{ property.title }}</h4>
+    <span class="badge
+      {% if property.overall_status == 'Verified' %}bg-success
+      {% elif property.overall_status == 'Rejected' %}bg-danger
+      {% elif property.overall_status == 'In Review' %}bg-info text-dark
+      {% else %}bg-secondary{% endif %}">
+      {{ property.overall_status }}
+    </span>
+  </div>
+  <div>
+    <a href="{{ url_for('property.edit_property', property_id=property.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+    <form method="POST" action="{{ url_for('property.delete_property', property_id=property.id) }}" class="d-inline"
+          onsubmit="return confirm('Delete this property and all its documents?');">
+      <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+    </form>
+  </div>
+</div>
+
+<!-- Photo slideshow -->
+<div class="mb-4">
+  {% if property.photos %}
+    <div id="propertyPhotoCarousel" class="carousel slide photo-carousel">
+      <div class="carousel-indicators">
+        {% for photo in property.photos %}
+          <button type="button" data-bs-target="#propertyPhotoCarousel" data-bs-slide-to="{{ loop.index0 }}"
+                  {% if loop.first %}class="active" aria-current="true"{% endif %}></button>
+        {% endfor %}
+      </div>
+      <div class="carousel-inner">
+        {% for photo in property.photos %}
+          <div class="carousel-item {% if loop.first %}active{% endif %}">
+            <img class="lazy-photo" src="{{ url_for('photo.serve_photo', photo_id=photo.id) }}" alt="{{ photo.caption or property.title }}">
+          </div>
+        {% endfor %}
+      </div>
+      {% if property.photos|length > 1 %}
+        <button class="carousel-control-prev" type="button" data-bs-target="#propertyPhotoCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon"></span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#propertyPhotoCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon"></span>
+        </button>
+      {% endif %}
+    </div>
+    <div class="d-flex justify-content-between align-items-center mt-2">
+      <span class="text-muted small">{{ property.photos|length }} photo(s)</span>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#photoUploadBox">
+        <i class="bi bi-images"></i> Manage Photos
+      </button>
+    </div>
+  {% else %}
+    <div class="photo-thumb-empty empty-state-photo" style="--empty-photo: url('{{ url_for('static', filename='demo_photos/demo_5.jpg') }}'); border-style: solid;">
+      <i class="bi bi-images fs-2"></i>
+      <p class="mb-2 mt-2">No photos yet &mdash; add a few so this property looks its best.</p>
+      <button class="btn btn-sm btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#photoUploadBox">
+        <i class="bi bi-upload"></i> Upload Photos
+      </button>
+    </div>
+  {% endif %}
+
+  <div class="collapse mt-2" id="photoUploadBox">
+    <div class="card">
+      <div class="card-body">
+        <form method="POST" action="{{ url_for('photo.upload_photos', property_id=property.id) }}" enctype="multipart/form-data" class="row g-2 align-items-end">
+          <div class="col-md-9">
+            <label class="form-label">Add photos (PNG/JPG/WEBP, up to 10 at once)</label>
+            <input type="file" name="photos" class="form-control" accept=".png,.jpg,.jpeg,.webp" multiple required>
+          </div>
+          <div class="col-md-3">
+            <button type="submit" class="btn btn-primary w-100">Upload</button>
+          </div>
+        </form>
+        {% if property.photos %}
+        <div class="d-flex flex-wrap gap-2 mt-3">
+          {% for photo in property.photos %}
+          <div class="text-center">
+            <img class="lazy-photo" src="{{ url_for('photo.serve_photo', photo_id=photo.id) }}" style="width:70px;height:70px;object-fit:cover;border-radius:8px;">
+            <form method="POST" action="{{ url_for('photo.delete_photo', photo_id=photo.id) }}" onsubmit="return confirm('Remove this photo?');">
+              <button type="submit" class="btn btn-sm btn-link text-danger p-0 mt-1"><i class="bi bi-trash"></i></button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted">Property Details</h6>
+        <table class="table table-sm mb-0">
+          <tr><th>Type</th><td>{{ property.property_type }}</td></tr>
+          <tr><th>Survey No.</th><td>{{ property.survey_number or '-' }}</td></tr>
+          <tr><th>Address</th><td>{{ property.address }}</td></tr>
+          <tr><th>Area</th><td>{{ property.area_sq_ft or '-' }} sq. ft.</td></tr>
+          {% if current_user.is_admin %}<tr><th>Owner</th><td>{{ property.owner.full_name }}</td></tr>{% endif %}
+          <tr><th>Created</th><td>{{ property.created_at.strftime('%d %b %Y, %I:%M %p') }}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="card mt-3" id="location">
+      <div class="card-body">
+        <h6 class="text-muted"><i class="bi bi-geo-alt"></i> Location</h6>
+        <p class="small mb-2">{{ property.full_address }}</p>
+
+        {% if property.has_coordinates %}
+          <div id="property-map" style="height: 220px; border-radius: var(--radius-sm); overflow: hidden;"
+               data-lat="{{ property.latitude }}" data-lng="{{ property.longitude }}"
+               data-title="{{ property.title }}"></div>
+        {% else %}
+          <div class="alert alert-info small mb-2 py-2">
+            <i class="bi bi-info-circle"></i> We couldn't pinpoint this property on the map yet
+            (the address may need more detail). You can still open it in Google Maps below.
+          </div>
+        {% endif %}
+
+        <div class="d-flex gap-2 mt-2">
+          {% if property.has_coordinates %}
+            <a class="btn btn-sm btn-outline-primary flex-fill"
+               href="https://www.google.com/maps/search/?api=1&query={{ property.latitude }},{{ property.longitude }}"
+               target="_blank" rel="noopener">
+              <i class="bi bi-box-arrow-up-right"></i> Open in Google Maps
+            </a>
+            <a class="btn btn-sm btn-outline-secondary flex-fill"
+               href="https://www.google.com/maps/dir/?api=1&destination={{ property.latitude }},{{ property.longitude }}"
+               target="_blank" rel="noopener">
+              <i class="bi bi-signpost-2"></i> Get Directions
+            </a>
+          {% else %}
+            <a class="btn btn-sm btn-outline-primary flex-fill"
+               href="https://www.google.com/maps/search/?api=1&query={{ property.full_address | urlencode }}"
+               target="_blank" rel="noopener">
+              <i class="bi bi-box-arrow-up-right"></i> Open in Google Maps
+            </a>
+            <a class="btn btn-sm btn-outline-secondary flex-fill"
+               href="https://www.google.com/maps/dir/?api=1&destination={{ property.full_address | urlencode }}"
+               target="_blank" rel="noopener">
+              <i class="bi bi-signpost-2"></i> Get Directions
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-body">
+        <h6 class="text-muted">Verification</h6>
+        <p class="small text-muted mb-2">View the full status audit trail below.</p>
+        <a href="{{ url_for('verification.history', property_id=property.id) }}" class="btn btn-sm btn-outline-primary">View History</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-7">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h6 class="text-muted mb-0">Documents</h6>
+      <a href="{{ url_for('document.upload_document', property_id=property.id) }}" class="btn btn-sm btn-primary">
+        <i class="bi bi-upload"></i> Upload Document
+      </a>
+    </div>
+
+    {% if property.documents %}
+      {% for doc in property.documents %}
+      <div class="card mb-2">
+        <div class="card-body py-2 px-3">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <strong>{{ doc.doc_type }}</strong> &mdash;
+              <a href="{{ url_for('document.download_document', document_id=doc.id) }}" target="_blank">{{ doc.original_filename }}</a>
+              <div class="small text-muted">
+                OCR:
+                <span class="badge
+                  {% if doc.ocr_status == 'Completed' %}bg-success
+                  {% elif doc.ocr_status == 'Failed' %}bg-danger
+                  {% else %}bg-secondary{% endif %}">
+                  {{ doc.ocr_status }}
+                </span>
+                &middot; {{ doc.uploaded_at.strftime('%d %b %Y') }}
+              </div>
+            </div>
+            <div>
+              <form method="POST" action="{{ url_for('document.reprocess_ocr', document_id=doc.id) }}" class="d-inline">
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Re-run OCR</button>
+              </form>
+              <form method="POST" action="{{ url_for('document.delete_document', document_id=doc.id) }}" class="d-inline"
+                    onsubmit="return confirm('Delete this document?');">
+                <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+              </form>
+            </div>
+          </div>
+          {% if doc.extracted_text %}
+          <details class="mt-2">
+            <summary class="small text-primary" style="cursor:pointer;">View extracted text</summary>
+            <pre class="small bg-light p-2 mt-1 mb-0" style="white-space: pre-wrap;">{{ doc.extracted_text[:1500] }}{% if doc.extracted_text|length > 1500 %}...{% endif %}</pre>
+          </details>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    {% else %}
+      <div class="alert alert-light border text-center py-4">
+        <p class="mb-0 text-muted">No documents uploaded yet.</p>
+      </div>
+    {% endif %}
+
+    <!-- AI Verification (NLP matching + risk scoring) -->
+    <div class="card mt-3">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="text-muted mb-0"><i class="bi bi-cpu"></i> AI Verification</h6>
+          <form method="POST" action="{{ url_for('analysis.run', property_id=property.id) }}"
+                data-stages="Extracting document fields...|Comparing across documents...|Scoring risk...">
+            <button type="submit" class="btn btn-sm btn-primary" {% if not property.documents %}disabled title="Upload a document first"{% endif %}>
+              <span class="btn-label"><i class="bi bi-magic"></i> {% if property.latest_analysis %}Re-run Analysis{% else %}Run Automated Verification{% endif %}</span>
+            </button>
+          </form>
+        </div>
+
+        {% if property.latest_analysis %}
+          {% set a = property.latest_analysis %}
+          <div class="d-flex align-items-center gap-3 mb-3">
+            <span class="risk-pill risk-{{ a.risk_level }} risk-pill-animated">
+              <i class="bi bi-shield-exclamation"></i> <span class="counter" data-counter="{{ a.risk_score }}" data-counter-suffix="/100">0/100</span> &middot; {{ a.risk_level }} Risk
+            </span>
+            <span class="small text-muted">{{ a.checks_passed }}/{{ a.checks_run }} checks passed &middot; run {{ a.created_at.strftime('%d %b %Y, %I:%M %p') }}</span>
+          </div>
+
+          <div data-stagger-group>
+          {% for f in a.findings %}
+            <div class="finding-row finding-{{ f.severity }} stagger">
+              <div class="d-flex justify-content-between">
+                <strong class="small">
+                  {{ f.title }}
+                  {% if f.explain %}
+                    <i class="bi bi-question-circle text-muted ms-1" style="cursor: help;"
+                       data-bs-toggle="tooltip" data-bs-placement="top" title="{{ f.explain }}"></i>
+                  {% endif %}
+                </strong>
+                {% if f.severity == 'pass' %}<span class="small text-primary"><i class="bi bi-check-circle"></i></span>{% endif %}
+              </div>
+              <div class="small text-muted">{{ f.detail }}</div>
+            </div>
+          {% endfor %}
+          </div>
+
+          <a href="{{ url_for('analysis.report', property_id=property.id) }}" class="btn btn-sm btn-outline-primary mt-2">
+            <i class="bi bi-file-earmark-pdf"></i> Download PDF Report
+          </a>
+          <p class="small text-muted mt-2 mb-0">
+            <i class="bi bi-info-circle"></i> This score supports technical document-consistency checks only &mdash;
+            a verification officer makes the final call in the Review Queue.
+          </p>
+        {% else %}
+          <p class="small text-muted mb-0">
+            No automated analysis has been run yet. Upload documents, then run verification to
+            get an NLP consistency check and an explainable risk score.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+{% if property.has_coordinates %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    var mapEl = document.getElementById("property-map");
+    if (!mapEl) return;
+
+    var lat = parseFloat(mapEl.dataset.lat);
+    var lng = parseFloat(mapEl.dataset.lng);
+
+    var map = L.map(mapEl).setView([lat, lng], 15);
+
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    L.marker([lat, lng]).addTo(map).bindPopup(mapEl.dataset.title).openPopup();
+  });
+</script>
+{% endif %}
+{% endblock %}

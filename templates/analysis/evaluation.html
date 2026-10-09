@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}Model Evaluation{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="mb-0">Risk Engine Evaluation</h4>
+    <p class="text-muted small mb-0">
+      The engine run live against {{ total }} known-answer test scenarios
+      (the same ones <code>scripts/seed_demo.py</code> uses) &mdash; each with a
+      documented expected risk level.
+    </p>
+  </div>
+  <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+</div>
+
+<div class="row g-3 mb-4" data-stagger-group>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-bullseye"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ accuracy }}" data-counter-suffix="%">0%</span></h3>
+        <div class="text-muted small">Overall Accuracy</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-check2-circle"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ correct }}">0</span>/{{ total }}</h3>
+        <div class="text-muted small">Scenarios Correct</div>
+      </div>
+    </div>
+  </div>
+  {% for level in ["Low", "Medium", "High"] %}
+  <div class="col-md-2">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="risk-pill risk-{{ level }} mb-2">{{ level }}</span>
+        <h5 class="mt-2 mb-0">{{ level_breakdown[level].correct }}/{{ level_breakdown[level].expected }}</h5>
+        <div class="text-muted small">correct</div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="table-responsive">
+  <table class="table table-hover bg-white align-middle">
+    <thead class="table-light">
+      <tr>
+        <th>Result</th>
+        <th>Scenario</th>
+        <th>Type</th>
+        <th>Expected</th>
+        <th>Actual</th>
+        <th>Score</th>
+        <th>Checks</th>
+        <th>Top findings</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>
+          {% if r.correct %}
+            <span class="text-primary"><i class="bi bi-check-circle-fill"></i></span>
+          {% else %}
+            <span class="text-danger"><i class="bi bi-x-circle-fill"></i></span>
+          {% endif %}
+        </td>
+        <td>{{ r.title }}</td>
+        <td class="small text-muted">{{ r.property_type }}</td>
+        <td><span class="risk-pill risk-{{ r.expected }}">{{ r.expected }}</span></td>
+        <td><span class="risk-pill risk-{{ r.actual }}">{{ r.actual }}</span></td>
+        <td>{{ r.score }}/100</td>
+        <td class="small text-muted">{{ r.checks_passed }}/{{ r.checks_run }}</td>
+        <td class="small text-muted">{{ r.top_findings | join(', ') if r.top_findings else '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="small text-muted mt-3">
+  <i class="bi bi-info-circle"></i> This is a known-answer test set, not a withheld validation
+  set from real-world labeled data &mdash; it checks that the rule-based engine behaves as
+  designed, not that it generalizes to documents it has never seen. Real Verified/Rejected
+  outcomes accumulated from actual use would be the right data to validate against next.
+</p>
+{% endblock %}

@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Review Queue{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <h4 class="mb-0">Review Queue</h4>
+    <p class="text-muted small mb-0">Properties awaiting a human decision, riskiest first.</p>
+  </div>
+  <div>
+    <a href="{{ url_for('analysis.export_queue_csv') }}" class="btn btn-sm btn-outline-secondary">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-sm btn-outline-secondary">Back to Dashboard</a>
+  </div>
+</div>
+
+{% if properties %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle bg-white">
+    <thead class="table-light">
+      <tr>
+        <th>Title</th>
+        <th>Owner</th>
+        <th>Status</th>
+        <th>Risk</th>
+        <th>Documents</th>
+        <th>Last Updated</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in properties %}
+      {% set a = p.latest_analysis %}
+      <tr>
+        <td>{{ p.title }}</td>
+        <td>{{ p.owner.full_name }}</td>
+        <td>
+          <span class="badge
+            {% if p.overall_status == 'In Review' %}bg-info text-dark
+            {% else %}bg-secondary{% endif %}">{{ p.overall_status }}</span>
+        </td>
+        <td>
+          {% if a %}
+            <span class="risk-pill risk-{{ a.risk_level }}">{{ a.risk_score }}/100 &middot; {{ a.risk_level }}</span>
+          {% else %}
+            <span class="text-muted small">Not analyzed</span>
+          {% endif %}
+        </td>
+        <td>{{ p.documents|length }}</td>
+        <td class="small text-muted">{{ p.updated_at.strftime('%d %b %Y') }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('property.view_property', property_id=p.id) }}" class="btn btn-sm btn-outline-primary">Review</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card text-center py-5 empty-state-photo" style="--empty-photo: url('{{ url_for('static', filename='demo_photos/demo_4.jpg') }}');">
+  <div class="card-body">
+    <span class="feature-icon mx-auto mb-3" style="width:56px;height:56px;font-size:1.6rem;"><i class="bi bi-check2-circle"></i></span>
+    <p class="mb-0 text-muted">Nothing waiting on review right now.</p>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

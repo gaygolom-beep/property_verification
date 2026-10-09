@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Upload Document{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-1">Upload Document</h4>
+        <p class="text-muted small">for <strong>{{ property.title }}</strong></p>
+        <form method="POST" enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label">Document Type</label>
+            <select name="doc_type" class="form-select" required>
+              {% for t in doc_types %}<option value="{{ t }}">{{ t }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">File (PDF, PNG, JPG)</label>
+            <input type="file" name="file" class="form-control" accept=".pdf,.png,.jpg,.jpeg" required>
+            <div class="form-text">The file will automatically be run through OCR to extract its text.</div>
+          </div>
+          <button type="submit" class="btn btn-primary">Upload &amp; Process</button>
+          <a href="{{ url_for('property.view_property', property_id=property.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

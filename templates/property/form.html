@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit Property' if property else 'Add Property' }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h4 class="mb-3">{{ 'Edit Property' if property else 'Add New Property' }}</h4>
+        <form method="POST">
+          <div class="mb-3">
+            <label class="form-label">Property Title</label>
+            <input type="text" name="title" class="form-control" required
+                   value="{{ property.title if property else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Property Type</label>
+            <select name="property_type" class="form-select" required>
+              {% for t in ['Residential', 'Commercial', 'Agricultural', 'Other'] %}
+                <option value="{{ t }}" {% if property and property.property_type == t %}selected{% endif %}>{{ t }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Survey / Plot Number</label>
+            <input type="text" name="survey_number" class="form-control"
+                   value="{{ property.survey_number if property else '' }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Address</label>
+            <textarea name="address" class="form-control" rows="2" required>{{ property.address if property else '' }}</textarea>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Area/Locality</label>
+              <input type="text" name="locality" class="form-control"
+                     value="{{ property.locality if property else '' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">City</label>
+              <input type="text" name="city" class="form-control"
+                     value="{{ property.city if property else '' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">State</label>
+              <input type="text" name="state" class="form-control"
+                     value="{{ property.state if property else '' }}">
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">PIN Code</label>
+              <input type="text" name="pincode" class="form-control"
+                     value="{{ property.pincode if property else '' }}">
+            </div>
+          </div>
+          <p class="form-text mt-n2 mb-3">
+            <i class="bi bi-geo-alt"></i> These help us pinpoint the property on the map automatically. You can leave them blank if unsure.
+          </p>
+
+          <div class="mb-3">
+            <label class="form-label">Area (sq. ft.)</label>
+            <input type="number" step="0.01" name="area_sq_ft" class="form-control"
+                   value="{{ property.area_sq_ft if property else '' }}">
+          </div>
+          <button type="submit" class="btn btn-primary">{{ 'Save Changes' if property else 'Add Property' }}</button>
+          <a href="{{ url_for('property.list_properties') }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Verification History{% endblock %}
+{% block content %}
+<h4>Verification History &mdash; {{ property.title }}</h4>
+<p class="text-muted small">Every status change is preserved here as an audit trail; nothing is ever overwritten.</p>
+
+{% if current_user.is_admin %}
+<div class="card mb-4">
+  <div class="card-body">
+    <h6 class="text-muted">Update Status</h6>
+    <form method="POST" action="{{ url_for('verification.update_status', property_id=property.id) }}" class="row g-2">
+      <div class="col-auto">
+        <select name="status" class="form-select">
+          {% for s in property.STATUS_CHOICES %}
+            <option value="{{ s }}" {% if property.overall_status == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col">
+        <input type="text" name="remarks" class="form-control" placeholder="Remarks (optional)">
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<ul class="list-group">
+  {% for r in records %}
+  <li class="list-group-item">
+    <div class="d-flex justify-content-between">
+      <div>
+        <span class="badge
+          {% if r.status == 'Verified' %}bg-success
+          {% elif r.status == 'Rejected' %}bg-danger
+          {% elif r.status == 'In Review' %}bg-info text-dark
+          {% else %}bg-secondary{% endif %}">{{ r.status }}</span>
+        {% if r.remarks %}<span class="ms-2">{{ r.remarks }}</span>{% endif %}
+      </div>
+      <small class="text-muted">{{ r.changed_by.full_name }} &middot; {{ r.created_at.strftime('%d %b %Y, %I:%M %p') }}</small>
+    </div>
+  </li>
+  {% endfor %}
+</ul>
+
+<a href="{{ url_for('property.view_property', property_id=property.id) }}" class="btn btn-outline-secondary mt-3">Back to Property</a>
+{% endblock %}

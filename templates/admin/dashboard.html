@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Admin Dashboard</h4>
+  <div>
+    <a href="{{ url_for('admin.export_dashboard_csv') }}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-download"></i> Export CSV
+    </a>
+    <a href="{{ url_for('analysis.evaluation') }}" class="btn btn-outline-primary btn-sm">
+      <i class="bi bi-bullseye"></i> Model Evaluation
+    </a>
+    <a href="{{ url_for('analysis.review_queue') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-list-check"></i> Review Queue ({{ review_queue_count }})
+    </a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4" data-stagger-group>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-houses"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ total_properties }}">0</span></h3>
+        <div class="text-muted small">Total Properties</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-file-earmark-text"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ total_documents }}">0</span></h3>
+        <div class="text-muted small">Total Documents</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-people"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ total_owners }}">0</span></h3>
+        <div class="text-muted small">Property Owners</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card feature-tile text-center stagger-in">
+      <div class="card-body py-4">
+        <span class="feature-icon mx-auto mb-2" style="width:52px;height:52px;font-size:1.5rem;"><i class="bi bi-cpu"></i></span>
+        <h3 class="mt-2 mb-0"><span class="counter" data-counter="{{ total_analyses }}">0</span></h3>
+        <div class="text-muted small">Automated Analyses Run</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted">Properties by Verification Status</h6>
+        <table class="table table-sm mb-0">
+          {% for status, count in status_counts.items() %}
+          <tr><td>{{ status }}</td><td class="text-end fw-bold">{{ count }}</td></tr>
+          {% endfor %}
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted">Documents by OCR Status</h6>
+        <table class="table table-sm mb-0">
+          {% for status, count in ocr_counts.items() %}
+          <tr><td>{{ status }}</td><td class="text-end fw-bold">{{ count }}</td></tr>
+          {% endfor %}
+        </table>
+        {% if ocr_success_rate is not none %}
+          <div class="small text-muted mt-1">OCR success rate: <strong>{{ ocr_success_rate }}%</strong> of processed documents</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <h6 class="text-muted">Properties by Risk Level</h6>
+        <table class="table table-sm mb-0">
+          <tr><td><span class="risk-pill risk-Low">Low</span></td><td class="text-end fw-bold">{{ risk_counts.Low }}</td></tr>
+          <tr><td><span class="risk-pill risk-Medium">Medium</span></td><td class="text-end fw-bold">{{ risk_counts.Medium }}</td></tr>
+          <tr><td><span class="risk-pill risk-High">High</span></td><td class="text-end fw-bold">{{ risk_counts.High }}</td></tr>
+        </table>
+        <div class="small text-muted mt-1">{{ properties_analyzed }} analyzed &middot; {{ properties_awaiting_analysis }} not yet analyzed</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h6 class="text-muted">Recently Added Properties</h6>
+<div class="table-responsive">
+  <table class="table table-hover bg-white">
+    <thead class="table-light">
+      <tr><th>Title</th><th>Owner</th><th>Status</th><th>Risk</th><th>Created</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for p in recent_properties %}
+      {% set a = p.latest_analysis %}
+      <tr>
+        <td>{{ p.title }}</td>
+        <td>{{ p.owner.full_name }}</td>
+        <td>
+          <span class="badge
+            {% if p.overall_status == 'Verified' %}bg-success
+            {% elif p.overall_status == 'Rejected' %}bg-danger
+            {% elif p.overall_status == 'In Review' %}bg-info text-dark
+            {% else %}bg-secondary{% endif %}">{{ p.overall_status }}</span>
+        </td>
+        <td>
+          {% if a %}<span class="risk-pill risk-{{ a.risk_level }}">{{ a.risk_level }}</span>{% else %}<span class="text-muted small">&mdash;</span>{% endif %}
+        </td>
+        <td>{{ p.created_at.strftime('%d %b %Y') }}</td>
+        <td><a href="{{ url_for('property.view_property', property_id=p.id) }}" class="btn btn-sm btn-outline-primary">View</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block title %}Properties{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">{{ 'All Properties' if current_user.is_admin else 'My Properties' }}</h4>
+  <a href="{{ url_for('property.new_property') }}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> Add Property</a>
+</div>
+
+<form method="GET" class="row g-2 mb-3 align-items-center">
+  <div class="col-auto">
+    <select name="status" class="form-select form-select-sm" onchange="this.form.submit()">
+      <option value="">All Statuses</option>
+      {% for s in status_choices %}
+        <option value="{{ s }}" {% if status_filter == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="col-auto">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+      <input type="search" name="q" class="form-control" placeholder="Search title, address, city..." value="{{ search_query }}" style="min-width: 240px;">
+    </div>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-sm btn-outline-primary">Search</button>
+    {% if status_filter or search_query %}
+      <a href="{{ url_for('property.list_properties') }}" class="btn btn-sm btn-outline-secondary">Clear</a>
+    {% endif %}
+  </div>
+</form>
+
+{% if properties %}
+<div class="table-responsive">
+  <table class="table table-hover align-middle bg-white">
+    <thead class="table-light">
+      <tr>
+        <th></th>
+        <th>Title</th>
+        <th>Type</th>
+        <th>Address</th>
+        {% if current_user.is_admin %}<th>Owner</th>{% endif %}
+        <th>Status</th>
+        <th>Risk</th>
+        <th>Documents</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in properties %}
+      {% set a = p.latest_analysis %}
+      <tr>
+        <td>
+          {% if p.photos %}
+            <img class="lazy-photo" src="{{ url_for('photo.serve_photo', photo_id=p.photos[0].id) }}" style="width:48px;height:36px;object-fit:cover;border-radius:6px;">
+          {% else %}
+            <span class="text-muted"><i class="bi bi-image"></i></span>
+          {% endif %}
+        </td>
+        <td>{{ p.title }}</td>
+        <td>{{ p.property_type }}</td>
+        <td>{{ p.address }}</td>
+        {% if current_user.is_admin %}<td>{{ p.owner.full_name }}</td>{% endif %}
+        <td>
+          <span class="badge
+            {% if p.overall_status == 'Verified' %}bg-success
+            {% elif p.overall_status == 'Rejected' %}bg-danger
+            {% elif p.overall_status == 'In Review' %}bg-info text-dark
+            {% else %}bg-secondary{% endif %}">
+            {{ p.overall_status }}
+          </span>
+        </td>
+        <td>
+          {% if a %}<span class="risk-pill risk-{{ a.risk_level }}">{{ a.risk_level }}</span>{% else %}<span class="text-muted small">&mdash;</span>{% endif %}
+        </td>
+        <td>{{ p.documents|length }}</td>
+        <td class="text-end">
+          <a href="{{ url_for('property.view_property', property_id=p.id) }}#location" class="btn btn-sm btn-outline-secondary" title="View on Map">
+            <i class="bi bi-geo-alt-fill"></i> Map
+          </a>
+          <a href="{{ url_for('property.view_property', property_id=p.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if pagination and pagination.pages > 1 %}
+<nav aria-label="Property list pages">
+  <ul class="pagination pagination-sm justify-content-center mt-3">
+    <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('property.list_properties', page=pagination.prev_num, status=status_filter, q=search_query) }}">Previous</a>
+    </li>
+    {% for page_num in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+      {% if page_num %}
+        <li class="page-item {% if page_num == pagination.page %}active{% endif %}">
+          <a class="page-link" href="{{ url_for('property.list_properties', page=page_num, status=status_filter, q=search_query) }}">{{ page_num }}</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+      {% endif %}
+    {% endfor %}
+    <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+      <a class="page-link" href="{{ url_for('property.list_properties', page=pagination.next_num, status=status_filter, q=search_query) }}">Next</a>
+    </li>
+  </ul>
+  <p class="text-center text-muted small">
+    Showing {{ properties|length }} of {{ pagination.total }} properties
+  </p>
+</nav>
+{% endif %}
+
+{% else %}
+<div class="card text-center py-5 empty-state-photo" style="--empty-photo: url('{{ url_for('static', filename='demo_photos/demo_3.jpg') }}');">
+  <div class="card-body">
+    <span class="feature-icon mx-auto mb-3" style="width:56px;height:56px;font-size:1.6rem;"><i class="bi bi-inbox"></i></span>
+    {% if status_filter or search_query %}
+      <p class="mb-3 text-muted">No properties match your search or filter.</p>
+      <a href="{{ url_for('property.list_properties') }}" class="btn btn-outline-secondary btn-sm">Clear search</a>
+    {% else %}
+      <p class="mb-3 text-muted">No properties found yet.</p>
+      <a href="{{ url_for('property.new_property') }}" class="btn btn-primary btn-sm">Add your first property</a>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,236 @@
+{% extends "base.html" %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<div class="hero hero-with-photo mb-5 position-relative overflow-hidden" style="--hero-photo: url('{{ url_for('static', filename='demo_photos/demo_1.jpg') }}');">
+  <!-- Interactive Canvas Motion Graphics Layer in Hero -->
+  <canvas id="heroMotionCanvas" class="hero-motion-canvas" aria-hidden="true"></canvas>
+
+  <div class="row align-items-center position-relative" style="z-index: 2;">
+    <!-- Left Column: Headline and CTAs -->
+    <div class="col-lg-7 text-start py-2">
+      <div class="hero-eyebrow reveal">
+        <span class="pulsing-radar-dot"></span>
+        <i class="bi bi-shield-check"></i> Next-Gen AI Document Verification
+      </div>
+      <h1 class="display-5 fw-bold reveal reveal-delay-1 hero-title">
+        Property records, deeds &amp; boundaries &mdash; <span class="highlight-shimmer">verified with confidence</span>
+      </h1>
+      <p class="fs-6 reveal reveal-delay-2 hero-lead mb-4">
+        Digitize property records, pinpoint locations on dynamic maps, execute automated OCR consistency checks, and trace risk flags in real time &mdash; a certified tamper-proof audit trail from deed submission to legal sign-off.
+      </p>
+      
+      <div class="d-flex flex-wrap gap-2 align-items-center reveal reveal-delay-3">
+        {% if current_user.is_authenticated %}
+          <a class="btn btn-light btn-lg text-primary fw-bold hero-btn-glow" href="{{ url_for('property.list_properties') }}">
+            <i class="bi bi-grid-fill me-1"></i> Go to My Properties
+          </a>
+        {% else %}
+          <a class="btn btn-light btn-lg text-primary fw-bold me-1 hero-btn-glow" href="{{ url_for('auth.login') }}">
+            <i class="bi bi-box-arrow-in-right me-1"></i> Get Started
+          </a>
+          <a class="btn btn-outline-light btn-lg me-1" href="{{ url_for('auth.register') }}">
+            Register
+          </a>
+        {% endif %}
+        <a class="btn btn-outline-light btn-lg" href="{{ url_for('how_it_works') }}">
+          <i class="bi bi-play-circle me-1"></i> Explore Pipeline
+        </a>
+      </div>
+
+      <!-- Quick Trust Badges -->
+      <div class="hero-trust-badges mt-4 pt-3 reveal reveal-delay-3 border-top border-light border-opacity-25 d-flex flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-2 text-white-50 small">
+          <i class="bi bi-check-circle-fill text-info"></i> <span>Automated OCR &amp; NLP</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 text-white-50 small">
+          <i class="bi bi-shield-lock-fill text-warning"></i> <span>Zero-Tamper Audit Trail</span>
+        </div>
+        <div class="d-flex align-items-center gap-2 text-white-50 small">
+          <i class="bi bi-geo-alt-fill text-light"></i> <span>Precise Geocoding</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Interactive Motion Graphic Verification Hub -->
+    <div class="col-lg-5 mt-4 mt-lg-0 reveal reveal-delay-2">
+      <div class="hero-graphic-card">
+        <!-- Floating Interactive Badges -->
+        <div class="floating-badge badge-top-right">
+          <div class="badge-icon bg-success text-white"><i class="bi bi-check2"></i></div>
+          <div class="badge-text">
+            <strong>Title Deed #9402</strong>
+            <small>Match 99.4% &bull; Valid</small>
+          </div>
+        </div>
+
+        <div class="floating-badge badge-bottom-left">
+          <div class="badge-icon bg-warning text-dark"><i class="bi bi-shield-shaded"></i></div>
+          <div class="badge-text">
+            <strong>Risk Scanner</strong>
+            <small>0 Anomalies Detected</small>
+          </div>
+        </div>
+
+        <!-- Central Scanner Preview Box -->
+        <div class="verification-scanner-screen">
+          <div class="scanner-scanline"></div>
+          <div class="scanner-header">
+            <span class="scanner-dot red"></span>
+            <span class="scanner-dot yellow"></span>
+            <span class="scanner-dot green"></span>
+            <span class="scanner-title"><i class="bi bi-cpu"></i> AI ANALYSIS ENGINE</span>
+            <span class="scanner-status-pill">LIVE</span>
+          </div>
+
+          <div class="scanner-body">
+            <div class="doc-mockup">
+              <div class="doc-line w-75"></div>
+              <div class="doc-line w-50"></div>
+              <div class="doc-grid">
+                <div class="doc-cell"><i class="bi bi-file-earmark-check text-primary"></i> Encumbrance: Clear</div>
+                <div class="doc-cell"><i class="bi bi-compass text-info"></i> Coordinates: Verified</div>
+                <div class="doc-cell"><i class="bi bi-diagram-2 text-warning"></i> OCR Cross-Match: OK</div>
+                <div class="doc-cell"><i class="bi bi-patch-check text-success"></i> Survey No: Consistent</div>
+              </div>
+            </div>
+            
+            <div class="scanner-radar">
+              <div class="radar-circle c1"></div>
+              <div class="radar-circle c2"></div>
+              <div class="radar-circle c3"></div>
+              <div class="radar-sweep"></div>
+              <div class="radar-center-icon"><i class="bi bi-shield-fill-check"></i></div>
+            </div>
+          </div>
+
+          <div class="scanner-footer">
+            <div class="d-flex justify-content-between align-items-center w-100">
+              <span class="small font-monospace text-white-50">INTEGRITY HASH: 8f9b..e71a</span>
+              <span class="badge bg-success text-white"><i class="bi bi-patch-check-fill me-1"></i> VERIFIED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Dynamic Live Stats Strip -->
+<div class="row g-3 mb-5 landing-stats-strip reveal reveal-delay-2" data-stagger-group>
+  <div class="col-6 col-md-3">
+    <div class="card stat-motion-card h-100">
+      <div class="card-body p-3 text-center">
+        <div class="stat-icon-wrap text-primary mb-2"><i class="bi bi-file-earmark-diff-fill"></i></div>
+        <h3 class="fw-bold mb-0 text-ink"><span data-counter="99.8">0</span>%</h3>
+        <p class="text-muted small mb-0">OCR Accuracy Rate</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-motion-card h-100">
+      <div class="card-body p-3 text-center">
+        <div class="stat-icon-wrap text-info mb-2"><i class="bi bi-lightning-charge-fill"></i></div>
+        <h3 class="fw-bold mb-0 text-ink">&lt; <span data-counter="2.4">0</span>s</h3>
+        <p class="text-muted small mb-0">Analysis Turnaround</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-motion-card h-100">
+      <div class="card-body p-3 text-center">
+        <div class="stat-icon-wrap text-warning mb-2"><i class="bi bi-geo-fill"></i></div>
+        <h3 class="fw-bold mb-0 text-ink"><span data-counter="100">0</span>%</h3>
+        <p class="text-muted small mb-0">Cadastral Pinpoint</p>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card stat-motion-card h-100">
+      <div class="card-body p-3 text-center">
+        <div class="stat-icon-wrap text-success mb-2"><i class="bi bi-shield-check"></i></div>
+        <h3 class="fw-bold mb-0 text-ink"><span data-counter="1420">0</span>+</h3>
+        <p class="text-muted small mb-0">Properties Protected</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Section Header with Animated Accent Line -->
+<div class="text-center mb-4 reveal">
+  <div class="section-badge mb-2"><i class="bi bi-stars text-warning me-1"></i> Core Verification Architecture</div>
+  <h2 class="display-6 fw-bold">Everything Needed for Bulletproof Due Diligence</h2>
+  <div class="section-accent-line mx-auto"></div>
+  <p class="text-muted col-md-8 mx-auto mt-2">
+    From physical deed upload to multi-document cross-referencing and geo-spatial validation, our automated pipeline eliminates human blindspots.
+  </p>
+</div>
+
+<div class="row g-4" data-stagger-group>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-person-check"></i></span>
+        <h5 class="mt-1">Secure Authentication</h5>
+        <p class="text-muted small mb-0">Role-based access control with tamper-proof identity logs for property owners and accredited verification officers.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-file-earmark-text"></i></span>
+        <h5 class="mt-1">Document Management &amp; OCR</h5>
+        <p class="text-muted small mb-0">Upload multi-page title deeds, encumbrance certificates, and NOCs with automated high-precision text extraction.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-geo-alt"></i></span>
+        <h5 class="mt-1">Property Location Map</h5>
+        <p class="text-muted small mb-0">Every parcel is reverse-geocoded and pinned on an interactive geospatial map with coordinate boundaries and routing.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-cpu"></i></span>
+        <h5 class="mt-1">AI Consistency &amp; Risk Scoring</h5>
+        <p class="text-muted small mb-0">Advanced NLP compares cross-document grantor names, plot dimensions, and dates; real-time risk scores flag red flags.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-clock-history"></i></span>
+        <h5 class="mt-1">Audit-Ready Tracking</h5>
+        <p class="text-muted small mb-0">Immutable event stream preserves every verification verdict, status change, and timestamp for court-ready proof.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card feature-tile feature-interactive h-100 stagger-in">
+      <div class="card-body p-4 position-relative overflow-hidden">
+        <div class="tile-bg-glow"></div>
+        <span class="feature-icon mb-3"><i class="bi bi-clipboard-check"></i></span>
+        <h5 class="mt-1">Human Review &amp; Reports</h5>
+        <p class="text-muted small mb-0">Verification analysts investigate AI discrepancies and issue cryptographically verifiable, one-click PDF audit dossiers.</p>
+        <div class="tile-bottom-indicator"></div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
